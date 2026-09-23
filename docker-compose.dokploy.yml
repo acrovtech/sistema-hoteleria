@@ -1,0 +1,44 @@
+# Despliegue en Dokploy (compose) usando la DB Postgres ya creada ("hoteleria").
+# En Dokploy: Project > production > Create Service > Compose, apunta al repo y
+# selecciona este archivo. La DB se referencia por su hostname interno vía DATABASE_URL.
+#
+# Variables a definir en Dokploy (Environment del compose):
+#   DATABASE_URL=postgresql://postgres:<PASS>@<hoteleria-host>:5432/<db>
+#     (el host interno y la pass están en el servicio hoteleria de Dokploy)
+#   JWT_SECRET=<genera uno nuevo: openssl rand -hex 32>
+#   CORS_ORIGIN=https://<dominio-del-admin>
+#   VITE_API_URL=https://<dominio-del-api>   (se usa en BUILD del admin)
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      ENABLE_PUBLIC_WEBSITE: "false"
+      ENABLE_BOOKING_ENGINE: "false"
+      PLAN: ADMIN_ONLY
+      PORT: 3001
+    expose:
+      - "3001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+  admin:
+    build:
+      context: .
+      dockerfile: ./apps/admin/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    expose:
+      - "3000"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped

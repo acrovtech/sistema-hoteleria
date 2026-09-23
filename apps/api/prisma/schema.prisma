@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN_HOTEL
+  RECEPCION
+  LIMPIEZA
+  CLIENTE
+}
+
+enum Plan {
+  FULL
+  ADMIN_ONLY
+}
+
+enum RoomStatus {
+  DISPONIBLE
+  OCUPADA
+  LIMPIEZA
+  MANTENIMIENTO
+}
+
+enum ReservationStatus {
+  CONFIRMADA
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELADA
+}
+
+enum ReservationOrigin {
+  ADMIN
+  WEB
+}
+
+model Hotel {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      Plan     @default(ADMIN_ONLY)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  rooms     Room[]
+  clients   Client[]
+  roomTypes RoomType[]
+  reservations Reservation[]
+  licenses  License[]
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  password     String
+  role         Role           @default(RECEPCION)
+  hotelId      String?
+  hotel        Hotel?         @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  refreshTokens RefreshToken[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([hotelId])
+}
+
+model RoomType {
+  id          String   @id @default(cuid())
+  name        String
+  priceBase   Decimal  @db.Decimal(10, 2)
+  capacity    Int
+  description String?
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  rooms       Room[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([hotelId])
+}
+
+model Room {
+  id           String     @id @default(cuid())
+  number       String
+  status       RoomStatus @default(DISPONIBLE)
+  hotelId      String
+  hotel        Hotel      @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  typeId       String
+  type         RoomType   @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  reservations Reservation[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([hotelId, number])
+  @@index([hotelId])
+  @@index([hotelId, status])
+}
+
+model Client {
+  id           String        @id @default(cuid())
+  dni          String?
+  name         String
+  phone        String?
+  email        String?
+  hotelId      String
+  hotel        Hotel         @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([hotelId])
+}
+
+model Reservation {
+  id        String            @id @default(cuid())
+  checkIn   DateTime
+  checkOut  DateTime
+  status    ReservationStatus @default(CONFIRMADA)
+  total     Decimal           @db.Decimal(10, 2)
+  origin    ReservationOrigin @default(ADMIN)
+  notes     String?
+  hotelId   String
+  hotel     Hotel             @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  roomId    String
+  room      Room              @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  clientId  String
+  client    Client            @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([hotelId])
+  @@index([hotelId, checkIn])
+  @@index([roomId, checkIn, checkOut])
+}
+
+model License {
+  id        String   @id @default(cuid())
+  hotelId   String
+  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  plan      Plan
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hotelId])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}

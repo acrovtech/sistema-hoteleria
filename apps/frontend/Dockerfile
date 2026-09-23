@@ -1,0 +1,5 @@
+# FASE 2: placeholder estático hasta implementar el frontend Next.js.
+FROM nginx:1.27-alpine
+COPY index.html /usr/share/nginx/html/index.html
+EXPOSE 3000
+CMD ["nginx", "-g", "daemon off;"]

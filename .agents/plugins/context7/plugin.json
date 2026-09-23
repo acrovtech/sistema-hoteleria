@@ -1,0 +1,6 @@
+{
+  "name": "context7",
+  "version": "1.0.0",
+  "description": "Context7 docs MCP (resolve-library-id + query-docs) via Stdio",
+  "tools": ["resolve-library-id", "query-docs"]
+}

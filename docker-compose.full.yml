@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: hotel
+      POSTGRES_PASSWORD: hotel123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hotel"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:hotel123@db:5432/hotel
+      # En producción real: JWT_SECRET distinto por entorno (secret manager)
+      ENABLE_PUBLIC_WEBSITE: "true"
+      ENABLE_BOOKING_ENGINE: "true"
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  admin:
+    build:
+      context: .
+      dockerfile: ./apps/admin/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3001
+    environment:
+      VITE_API_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+  frontend:
+    build: ./apps/frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - "3002:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+volumes:
+  pgdata:
