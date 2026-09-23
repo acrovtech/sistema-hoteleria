@@ -2,7 +2,7 @@
   "name": "sistema-hotel",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.20.0",
+  "packageManager": "pnpm@12.6.0",
   "scripts": {
     "dev:admin": "pnpm --filter @hotel/admin dev",
     "dev:api": "pnpm --filter @hotel/api dev",

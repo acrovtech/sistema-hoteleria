@@ -1,5 +1,5 @@
 FROM node:24-alpine AS base
-RUN corepack enable && corepack prepare pnpm@11.20.0 --activate
+RUN corepack enable && corepack prepare pnpm@12.6.0 --activate
 WORKDIR /app
 COPY pnpm-workspace.yaml package.json .npmrc ./
 COPY apps/api/package.json ./apps/api/

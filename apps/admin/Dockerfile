@@ -1,5 +1,5 @@
 FROM node:24-alpine AS build
-RUN corepack enable && corepack prepare pnpm@11.20.0 --activate
+RUN corepack enable && corepack prepare pnpm@12.6.0 --activate
 WORKDIR /app
 # VITE_* se incrusta en build: debe llegar como build-arg (Dokploy: Build Args)
 ARG VITE_API_URL=http://localhost:3001
