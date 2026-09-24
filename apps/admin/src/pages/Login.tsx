@@ -17,11 +17,19 @@ export default function Login() {
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       const from = (location.state as { from?: string } | null)?.from ?? '/';
       navigate(from, { replace: true });
-    } catch {
-      setError('Credenciales inválidas');
+    } catch (err) {
+      const status = (err as { response?: { status?: number; data?: { message?: string } } })?.response?.status;
+      const serverMsg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      if (status === 401) {
+        setError('Credenciales inválidas');
+      } else if (!status) {
+        setError('No se pudo contactar al API. Revisa tu conexión o la configuración del servidor.');
+      } else {
+        setError(Array.isArray(serverMsg) ? serverMsg.join(', ') : (serverMsg ?? `Error ${status}`));
+      }
     } finally {
       setBusy(false);
     }
